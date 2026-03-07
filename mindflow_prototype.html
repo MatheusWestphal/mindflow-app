@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindFlow — Protótipo Interativo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap');
+
+  :root {
+    --teal-900: #134E4A;
+    --teal-700: #0F766E;
+    --teal-500: #14B8A6;
+    --teal-400: #2DD4BF;
+    --teal-100: #CCFBF1;
+    --teal-50: #F0FDFA;
+    --stone-900: #1C1917;
+    --stone-700: #44403C;
+    --stone-400: #A8A29E;
+    --stone-100: #F5F5F4;
+    --amber: #F59E0B;
+    --rose: #F43F5E;
+    --violet: #8B5CF6;
+    --sky: #0EA5E9;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0A1628;
+    color: white;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* OUTER LAYOUT */
+  .outer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+    gap: 0;
+  }
+
+  /* HERO SECTION */
+  .hero {
+    text-align: center;
+    margin-bottom: 48px;
+    max-width: 780px;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    background: rgba(20,184,166,0.15);
+    border: 1px solid rgba(20,184,166,0.4);
+    color: var(--teal-400);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(42px, 6vw, 68px);
+    line-height: 1.05;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 0%, var(--teal-400) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    font-size: 17px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* PHONE FRAME */
+  .phone-showcase {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+
+  .phone-frame {
+    width: 320px;
+    height: 660px;
+    background: #111827;
+    border-radius: 44px;
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 32px 80px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* Notch */
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100px; height: 28px;
+    background: #111827;
+    border-radius: 0 0 20px 20px;
+    z-index: 100;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  .screen {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    position: relative;
+    background: var(--teal-50);
+  }
+
+  /* SCREENS */
+  .app-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+  }
+
+  .app-screen.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+
+  .app-screen.exit {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    height: 36px;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 24px 6px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .status-bar .time { flex: 1; }
+  .status-bar .icons { display: flex; gap: 4px; }
+
+  /* HOME SCREEN */
+  #screen-home {
+    background: linear-gradient(165deg, #0D4A45 0%, #0A3B37 50%, #092D2A 100%);
+  }
+
+  #screen-home .status-bar { color: rgba(255,255,255,0.7); }
+
+  .home-header {
+    padding: 8px 24px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .home-header .greeting {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 400;
+  }
+
+  .home-header .name {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+  }
+
+  .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal-400), var(--teal-700));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .mood-card {
+    margin: 16px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 24px;
+    padding: 20px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .mood-card:hover { transform: scale(1.02); background: rgba(255,255,255,0.12); }
+
+  .mood-card-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .mood-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mood-emoji { font-size: 36px; }
+
+  .mood-text .score {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--teal-400);
+    line-height: 1;
+  }
+
+  .mood-text .label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  .mood-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 36px;
+    margin-left: auto;
+  }
+
+  .chart-bar {
+    width: 6px;
+    border-radius: 3px;
+    background: rgba(45,212,191,0.4);
+    transition: height 0.6s ease;
+  }
+
+  .chart-bar.today { background: var(--teal-400); }
+
+  .section-title {
+    padding: 4px 24px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .quick-actions {
+    padding: 0 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .action-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-card:hover { background: rgba(255,255,255,0.1); transform: scale(1.02); }
+
+  .action-card .icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .action-card .ac-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 2px;
+  }
+
+  .action-card .ac-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .streak-bar {
+    margin: 12px 16px 0;
+    background: rgba(245,158,11,0.12);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 16px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .streak-bar:hover { background: rgba(245,158,11,0.18); }
+
+  .streak-fire { font-size: 22px; }
+
+  .streak-text { flex: 1; }
+  .streak-text strong { font-size: 14px; color: var(--amber); display: block; }
+  .streak-text span { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+  /* MOOD SCREEN */
+  #screen-mood {
+    background: #F0FDFA;
+  }
+
+  #screen-mood .status-bar { color: var(--stone-700); }
+
+  .screen-header {
+    padding: 8px 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+
+  .back-btn {
+    width: 36px; height: 36px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+    border: none;
+    color: var(--stone-700);
+  }
+
+  .back-btn:hover { background: rgba(0,0,0,0.1); }
+
+  .screen-header h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--stone-900);
+  }
+
+  .mood-body { padding: 20px; overflow-y: auto; flex: 1; }
+
+  .mood-q { font-size: 20px; font-weight: 700; color: var(--teal-900); margin-bottom: 6px; font-family: 'DM Serif Display', serif; }
+  .mood-sub { font-size: 13px; color: var(--stone-400); margin-bottom: 24px; }
+
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .emoji-option {
+    aspect-ratio: 1;
+    background: white;
+    border: 2px solid transparent;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 8px 4px;
+  }
+
+  .emoji-option:hover { transform: scale(1.08); border-color: var(--teal-400); }
+  .emoji-option.selected { border-color: var(--teal-500); background: var(--teal-50); transform: scale(1.1); }
+
+  .emoji-option .e { font-size: 22px; }
+  .emoji-option .el { font-size: 9px; color: var(--stone-400); font-weight: 500; text-align: center; }
+
+  .slider-section { margin-bottom: 24px; }
+  .slider-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .slider-label span { font-size: 13px; color: var(--stone-700); font-weight: 500; }
+  .slider-label .val { font-size: 20px; font-weight: 700; color: var(--teal-700); }
+
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--teal-500) 0%, var(--teal-500) 70%, #E5E7EB 70%);
+    outline: none;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--teal-600, #0D9488);
+    box-shadow: 0 2px 8px rgba(13,148,136,0.4);
+    cursor: pointer;
+    border: 3px solid white;
+  }
+
+  .note-area {
+    width: 100%;
+    background: white;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--stone-900);
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .note-area:focus { border-color: var(--teal-400); }
+
+  .primary-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--teal-600, #0D9488), var(--teal-500));
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+
+  .primary-btn:hover { transform: scale(1.02); }
+  .primary-btn:active { transform: scale(0.98); }
+
+  /* JOURNAL SCREEN */
+  #screen-journal {
+    background: #FAFAF9;
+  }
+
+  #screen-journal .status-bar { color: var(--stone-700); }
+
+  .journal-list { padding: 16px; flex: 1; overflow-y: auto; }
+
+  .journal-entry {
+    background: white;
+    border-radius: 20px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+
+  .journal-entry:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+
+  .je-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .je-date { font-size: 11px; color: var(--stone-400); font-weight: 500; }
+  .je-mood { font-size: 18px; }
+
+  .je-text {
+    font-size: 13px;
+    color: var(--stone-700);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .je-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 100px;
+    background: var(--teal-100);
+    color: var(--teal-700);
+  }
+
+  .tag.amber { background: rgba(245,158,11,0.15); color: #B45309; }
+  .tag.violet { background: rgba(139,92,246,0.12); color: #6D28D9; }
+  .tag.rose { background: rgba(244,63,94,0.1); color: #BE123C; }
+
+  .ai-insight {
+    background: linear-gradient(135deg, rgba(20,184,166,0.08), rgba(139,92,246,0.06));
+    border: 1px solid rgba(20,184,166,0.2);
+    border-radius: 16px;
+    padding: 14px;
+    margin: 0 16px 16px;
+  }
+
+  .ai-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--teal-600, #0D9488);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .ai-text { font-size: 12px; color: var(--stone-700); line-height: 1.5; }
+
+  /* HABITS SCREEN */
+  #screen-habits {
+    background: #F9FAFB;
+  }
+
+  #screen-habits .status-bar { color: var(--stone-700); }
+
+  .habits-body { padding: 16px; flex: 1; overflow-y: auto; }
+
+  .habits-summary {
+    background: linear-gradient(135deg, var(--teal-900), var(--teal-700));
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .hs-text { flex: 1; }
+  .hs-text .hs-score { font-size: 28px; font-weight: 800; color: var(--teal-400); }
+  .hs-text .hs-label { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+  .progress-ring {
+    width: 52px; height: 52px;
+    position: relative;
+  }
+
+  .progress-ring svg { transform: rotate(-90deg); }
+  .progress-ring circle { fill: none; stroke: rgba(255,255,255,0.15); stroke-width: 4; }
+  .progress-ring .fill { stroke: var(--teal-400); stroke-dasharray: 138; stroke-dashoffset: 42; transition: stroke-dashoffset 1s; }
+
+  .habit-item {
+    background: white;
+    border-radius: 18px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+
+  .habit-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .habit-item.done { opacity: 0.7; }
+
+  .habit-check {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid #E5E7EB;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+
+  .habit-item.done .habit-check {
+    background: var(--teal-500);
+    border-color: var(--teal-500);
+    color: white;
+  }
+
+  .habit-color {
+    width: 8px; height: 36px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .habit-info { flex: 1; }
+  .habit-title { font-size: 14px; font-weight: 600; color: var(--stone-900); margin-bottom: 2px; }
+  .habit-meta { font-size: 11px; color: var(--stone-400); }
+
+  .habit-streak { font-size: 12px; font-weight: 600; color: var(--amber); }
+
+  /* MEDITATION SCREEN */
+  #screen-meditate {
+    background: linear-gradient(160deg, #0C1B33 0%, #0A2A4A 50%, #0D1B2A 100%);
+  }
+
+  #screen-meditate .status-bar { color: rgba(255,255,255,0.5); }
+
+  .meditate-body { flex: 1; overflow-y: auto; padding: 16px; }
+
+  .breath-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .breath-card:hover { background: rgba(255,255,255,0.1); transform: scale(1.02); }
+
+  .breath-circle {
+    width: 80px; height: 80px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(20,184,166,0.3) 0%, rgba(20,184,166,0.05) 70%);
+    border: 2px solid rgba(20,184,166,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(20,184,166,0.3); }
+    50% { transform: scale(1.1); box-shadow: 0 0 0 16px rgba(20,184,166,0); }
+  }
+
+  .breath-title { font-size: 17px; font-weight: 700; color: white; margin-bottom: 4px; }
+  .breath-sub { font-size: 12px; color: rgba(255,255,255,0.4); }
+
+  .session-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .session-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .session-card:hover { background: rgba(255,255,255,0.09); transform: scale(1.03); }
+
+  .session-icon { font-size: 24px; margin-bottom: 8px; }
+  .session-title { font-size: 13px; font-weight: 600; color: white; margin-bottom: 2px; }
+  .session-dur { font-size: 11px; color: rgba(255,255,255,0.35); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 72px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    padding: 0 8px 12px;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 8px 4px;
+    border-radius: 12px;
+    transition: background 0.2s;
+    border: none;
+    background: none;
+  }
+
+  .nav-item:hover { background: rgba(0,0,0,0.05); }
+  .nav-item.active .nav-icon { color: var(--teal-600, #0D9488); }
+  .nav-item.active .nav-label { color: var(--teal-600, #0D9488); font-weight: 700; }
+
+  .nav-icon { font-size: 20px; color: #9CA3AF; }
+  .nav-label { font-size: 10px; color: #9CA3AF; font-weight: 500; }
+
+  #screen-home .bottom-nav, #screen-meditate .bottom-nav {
+    background: rgba(10,40,36,0.9);
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  #screen-home .nav-icon, #screen-meditate .nav-icon { color: rgba(255,255,255,0.3); }
+  #screen-home .nav-label, #screen-meditate .nav-label { color: rgba(255,255,255,0.3); }
+  #screen-home .nav-item.active .nav-icon, #screen-meditate .nav-item.active .nav-icon { color: var(--teal-400); }
+  #screen-home .nav-item.active .nav-label, #screen-meditate .nav-item.active .nav-label { color: var(--teal-400); }
+
+  /* RIGHT PANEL */
+  .info-panel {
+    width: 340px;
+    flex-shrink: 0;
+  }
+
+  .info-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .info-card h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--teal-400);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stack-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .stack-item:last-child { border-bottom: none; }
+
+  .stack-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .stack-name { font-size: 13px; font-weight: 600; color: white; flex: 1; }
+  .stack-role { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+  .feature-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 100px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    margin: 3px;
+  }
+
+  .nav-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav-tab {
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .nav-tab.active {
+    background: var(--teal-500);
+    border-color: var(--teal-500);
+    color: white;
+    box-shadow: 0 4px 16px rgba(20,184,166,0.35);
+  }
+
+  .nav-tab:hover:not(.active) { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.75); }
+
+  .arch-diagram {
+    background: rgba(255,255,255,0.03);
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .arch-layer {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+  }
+
+  .arch-layer-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    width: 60px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .arch-boxes { display: flex; gap: 6px; flex: 1; }
+
+  .arch-box {
+    flex: 1;
+    padding: 7px 6px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .ab-mobile { background: rgba(20,184,166,0.15); color: var(--teal-400); border: 1px solid rgba(20,184,166,0.25); }
+  .ab-api { background: rgba(139,92,246,0.15); color: #A78BFA; border: 1px solid rgba(139,92,246,0.25); }
+  .ab-data { background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.2); }
+  .ab-ai { background: rgba(244,63,94,0.12); color: #FDA4AF; border: 1px solid rgba(244,63,94,0.2); }
+  .ab-infra { background: rgba(14,165,233,0.12); color: #7DD3FC; border: 1px solid rgba(14,165,233,0.2); }
+
+  .arch-arrow {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+
+  .arch-arrow::after {
+    content: '↓';
+    color: rgba(255,255,255,0.15);
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="outer">
+
+  <div class="hero">
+    <div class="hero-tag">✦ Protótipo Interativo</div>
+    <h1>MindFlow</h1>
+    <p>Aplicativo de saúde mental e bem-estar — explore as telas abaixo e navegue entre os módulos do app</p>
+  </div>
+
+  <!-- NAV TABS -->
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showTab('prototype')">📱 Protótipo</div>
+    <div class="nav-tab" onclick="showTab('arch')">🏗 Arquitetura</div>
+    <div class="nav-tab" onclick="showTab('stack')">⚙️ Tech Stack</div>
+    <div class="nav-tab" onclick="showTab('modules')">📦 Módulos</div>
+  </div>
+
+  <!-- PROTOTYPE TAB -->
+  <div id="tab-prototype" class="phone-showcase">
+    <div class="phone-frame">
+      <div class="screen">
+
+        <!-- HOME SCREEN -->
+        <div id="screen-home" class="app-screen active">
+          <div class="status-bar">
+            <span class="time">9:41</span>
+            <div class="icons">▶▶ 🔋</div>
+          </div>
+          <div class="home-header">
+            <div>
+              <div class="greeting">Bom dia,</div>
+              <div class="name">Ana Silva 👋</div>
+            </div>
+            <div class="avatar">AS</div>
+          </div>
+
+          <div class="mood-card" onclick="navigate('mood')">
+            <div class="mood-card-label">Como você está hoje?</div>
+            <div class="mood-display">
+              <div class="mood-emoji">😌</div>
+              <div class="mood-text">
+                <div class="score">7.2</div>
+                <div class="label">Tranquilo • ontem</div>
+              </div>
+              <div class="mood-chart">
+                <div class="chart-bar" style="height:60%"></div>
+                <div class="chart-bar" style="height:75%"></div>
+                <div class="chart-bar" style="height:45%"></div>
+                <div class="chart-bar" style="height:80%"></div>
+                <div class="chart-bar" style="height:65%"></div>
+                <div class="chart-bar" style="height:70%"></div>
+                <div class="chart-bar today" style="height:72%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="streak-bar" onclick="navigate('habits')">
+            <div class="streak-fire">🔥</div>
+            <div class="streak-text">
+              <strong>12 dias seguidos!</strong>
+              <span>Continue! Você está indo muito bem</span>
+            </div>
+            <span style="color:rgba(255,255,255,0.3); font-size:18px">›</span>
+          </div>
+
+          <div class="section-title" style="padding-top:16px">Acesso Rápido</div>
+          <div class="quick-actions">
+            <div class="action-card" onclick="navigate('journal')">
+              <div class="icon">📔</div>
+              <div class="ac-title">Journal</div>
+              <div class="ac-sub">Escreva hoje</div>
+            </div>
+            <div class="action-card" onclick="navigate('meditate')">
+              <div class="icon">🧘</div>
+              <div class="ac-title">Meditar</div>
+              <div class="ac-sub">5 min • Foco</div>
+            </div>
+            <div class="action-card" onclick="navigate('habits')">
+              <div class="icon">✅</div>
+              <div class="ac-title">Hábitos</div>
+              <div class="ac-sub">3 de 5 feitos</div>
+            </div>
+            <div class="action-card" onclick="navigate('mood')">
+              <div class="icon">📊</div>
+              <div class="ac-title">Relatório</div>
+              <div class="ac-sub">Ver semana</div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <button class="nav-item active" onclick="navigate('home')">
+              <span class="nav-icon">🏠</span>
+              <span class="nav-label">Início</span>
+            </button>
+            <button class="nav-item" onclick="navigate('journal')">
+              <span class="nav-icon">📔</span>
+              <span class="nav-label">Journal</span>
+            </button>
+            <button class="nav-item" onclick="navigate('habits')">
+              <span class="nav-icon">✅</span>
+              <span class="nav-label">Hábitos</span>
+            </button>
+            <button class="nav-item" onclick="navigate('meditate')">
+              <span class="nav-icon">🧘</span>
+              <span class="nav-label">Meditar</span>
+            </button>
+            <button class="nav-item" onclick="navigate('mood')">
+              <span class="nav-icon">😊</span>
+              <span class="nav-label">Humor</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- MOOD SCREEN -->
+        <div id="screen-mood" class="app-screen">
+          <div class="status-bar" style="color:#374151">
+            <span class="time">9:41</span>
+            <div class="icons" style="color:#374151">▶▶ 🔋</div>
+          </div>
+          <div class="screen-header">
+            <button class="back-btn" onclick="navigate('home')">←</button>
+            <h2>Check-in de Humor</h2>
+          </div>
+          <div class="mood-body">
+            <div class="mood-q">Como você se sente agora?</div>
+            <div class="mood-sub">Toque no emoji que mais representa seu estado atual</div>
+
+            <div class="emoji-grid">
+              <div class="emoji-option" onclick="selectMood(this)"><div class="e">😄</div><div class="el">Ótimo</div></div>
+              <div class="emoji-option" onclick="selectMood(this)"><div class="e">🙂</div><div class="el">Bem</div></div>
+              <div class="emoji-option selected" onclick="selectMood(this)"><div class="e">😌</div><div class="el">Ok</div></div>
+              <div class="emoji-option" onclick="selectMood(this)"><div class="e">😕</div><div class="el">Mal</div></div>
+              <div class="emoji-option" onclick="selectMood(this)"><div class="e">😞</div><div class="el">Péssimo</div></div>
+              <div class="emoji-option" onclick="selectMood(this)"><div class="e">😰</div><div class="el">Ansioso</div></div>
+              <div class="emoji-option" onclick="selectMood(this)"><div class="e">😤</div><div class="el">Irritado</div></div>
+              <div class="emoji-option" onclick="selectMood(this)"><div class="e">😴</div><div class="el">Cansado</div></div>
+              <div class="emoji-option" onclick="selectMood(this)"><div class="e">🤩</div><div class="el">Feliz</div></div>
+              <div class="emoji-option" onclick="selectMood(this)"><div class="e">😔</div><div class="el">Triste</div></div>
+            </div>
+
+            <div class="slider-section">
+              <div class="slider-label">
+                <span>Intensidade</span>
+                <span class="val" id="slider-val">7</span>
+              </div>
+              <input type="range" min="1" max="10" value="7" oninput="document.getElementById('slider-val').textContent=this.value">
+            </div>
+
+            <textarea class="note-area" rows="3" placeholder="O que está causando esse sentimento? (opcional)"></textarea>
+
+            <button class="primary-btn" onclick="navigate('home')">Registrar Humor ✓</button>
+          </div>
+        </div>
+
+        <!-- JOURNAL SCREEN -->
+        <div id="screen-journal" class="app-screen">
+          <div class="status-bar" style="color:#374151">
+            <span class="time">9:41</span>
+            <div class="icons" style="color:#374151">▶▶ 🔋</div>
+          </div>
+          <div class="screen-header">
+            <button class="back-btn" onclick="navigate('home')">←</button>
+            <h2>Journal</h2>
+          </div>
+
+          <div class="ai-insight">
+            <div class="ai-label">✨ Insight da semana</div>
+            <div class="ai-text">Você menciona "trabalho" 68% das vezes quando registra ansiedade. Considere delimitar horários de desconexão digital.</div>
+          </div>
+
+          <div class="journal-list">
+            <div class="journal-entry">
+              <div class="je-top">
+                <span class="je-date">Hoje, 08:30</span>
+                <span class="je-mood">😌</span>
+              </div>
+              <div class="je-text">Acordo com pensamentos sobre a reunião de hoje. Respirei fundo antes de me levantar. Tentei focar no presente...</div>
+              <div class="je-tags">
+                <span class="tag">ansiedade</span>
+                <span class="tag amber">trabalho</span>
+                <span class="tag">respiração</span>
+              </div>
+            </div>
+
+            <div class="journal-entry">
+              <div class="je-top">
+                <span class="je-date">Ontem, 21:15</span>
+                <span class="je-mood">😄</span>
+              </div>
+              <div class="je-text">Fechei o laptop às 18h e fui caminhar. A cidade estava linda com o pôr do sol. Me senti mais leve do que nos últimos dias...</div>
+              <div class="je-tags">
+                <span class="tag">exercício</span>
+                <span class="tag violet">natureza</span>
+                <span class="tag">gratidão</span>
+              </div>
+            </div>
+
+            <div class="journal-entry">
+              <div class="je-top">
+                <span class="je-date">24/01, 20:00</span>
+                <span class="je-mood">😔</span>
+              </div>
+              <div class="je-text">Dia pesado. Sinto que não consigo dar conta de tudo. Será que estou exigindo demais de mim? Preciso conversar...</div>
+              <div class="je-tags">
+                <span class="tag rose">exaustão</span>
+                <span class="tag amber">trabalho</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <button class="nav-item" onclick="navigate('home')"><span class="nav-icon">🏠</span><span class="nav-label">Início</span></button>
+            <button class="nav-item active" onclick="navigate('journal')"><span class="nav-icon">📔</span><span class="nav-label">Journal</span></button>
+            <button class="nav-item" onclick="navigate('habits')"><span class="nav-icon">✅</span><span class="nav-label">Hábitos</span></button>
+            <button class="nav-item" onclick="navigate('meditate')"><span class="nav-icon">🧘</span><span class="nav-label">Meditar</span></button>
+            <button class="nav-item" onclick="navigate('mood')"><span class="nav-icon">😊</span><span class="nav-label">Humor</span></button>
+          </div>
+        </div>
+
+        <!-- HABITS SCREEN -->
+        <div id="screen-habits" class="app-screen">
+          <div class="status-bar" style="color:#374151">
+            <span class="time">9:41</span>
+            <div class="icons" style="color:#374151">▶▶ 🔋</div>
+          </div>
+          <div class="screen-header">
+            <button class="back-btn" onclick="navigate('home')">←</button>
+            <h2>Hábitos de Hoje</h2>
+          </div>
+          <div class="habits-body">
+            <div class="habits-summary">
+              <div class="hs-text">
+                <div class="hs-score">3 / 5</div>
+                <div class="hs-label">concluídos hoje • 🔥 12 dias seguidos</div>
+              </div>
+              <div class="progress-ring">
+                <svg viewBox="0 0 52 52" width="52" height="52">
+                  <circle cx="26" cy="26" r="22" stroke-width="4"/>
+                  <circle class="fill" cx="26" cy="26" r="22" stroke-width="4"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="habit-item done" onclick="toggleHabit(this)">
+              <div class="habit-check">✓</div>
+              <div class="habit-color" style="background:#14B8A6"></div>
+              <div class="habit-info">
+                <div class="habit-title">Meditação 10 min</div>
+                <div class="habit-meta">☀️ Manhã • Feito às 07:20</div>
+              </div>
+              <div class="habit-streak">🔥12</div>
+            </div>
+
+            <div class="habit-item done" onclick="toggleHabit(this)">
+              <div class="habit-check">✓</div>
+              <div class="habit-color" style="background:#8B5CF6"></div>
+              <div class="habit-info">
+                <div class="habit-title">Ler 20 páginas</div>
+                <div class="habit-meta">🌙 Noite • Feito às 22:00</div>
+              </div>
+              <div class="habit-streak">🔥8</div>
+            </div>
+
+            <div class="habit-item done" onclick="toggleHabit(this)">
+              <div class="habit-check">✓</div>
+              <div class="habit-color" style="background:#F59E0B"></div>
+              <div class="habit-info">
+                <div class="habit-title">Tomar 2L de água</div>
+                <div class="habit-meta">⏱ Ao longo do dia • Feito</div>
+              </div>
+              <div class="habit-streak">🔥5</div>
+            </div>
+
+            <div class="habit-item" onclick="toggleHabit(this)">
+              <div class="habit-check"></div>
+              <div class="habit-color" style="background:#F43F5E"></div>
+              <div class="habit-info">
+                <div class="habit-title">Caminhar 30 min</div>
+                <div class="habit-meta">🌇 Tarde • Pendente</div>
+              </div>
+              <div class="habit-streak" style="color:#9CA3AF">🔥3</div>
+            </div>
+
+            <div class="habit-item" onclick="toggleHabit(this)">
+              <div class="habit-check"></div>
+              <div class="habit-color" style="background:#0EA5E9"></div>
+              <div class="habit-info">
+                <div class="habit-title">Sem redes sociais após 22h</div>
+                <div class="habit-meta">🌙 Noite • Pendente</div>
+              </div>
+              <div class="habit-streak" style="color:#9CA3AF">🔥1</div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <button class="nav-item" onclick="navigate('home')"><span class="nav-icon">🏠</span><span class="nav-label">Início</span></button>
+            <button class="nav-item" onclick="navigate('journal')"><span class="nav-icon">📔</span><span class="nav-label">Journal</span></button>
+            <button class="nav-item active" onclick="navigate('habits')"><span class="nav-icon">✅</span><span class="nav-label">Hábitos</span></button>
+            <button class="nav-item" onclick="navigate('meditate')"><span class="nav-icon">🧘</span><span class="nav-label">Meditar</span></button>
+            <button class="nav-item" onclick="navigate('mood')"><span class="nav-icon">😊</span><span class="nav-label">Humor</span></button>
+          </div>
+        </div>
+
+        <!-- MEDITATE SCREEN -->
+        <div id="screen-meditate" class="app-screen">
+          <div class="status-bar">
+            <span class="time">9:41</span>
+            <div class="icons">▶▶ 🔋</div>
+          </div>
+          <div class="screen-header" style="border-bottom-color: rgba(255,255,255,0.08)">
+            <button class="back-btn" style="background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.7)" onclick="navigate('home')">←</button>
+            <h2 style="color:white">Meditação</h2>
+          </div>
+          <div class="meditate-body">
+            <div class="breath-card">
+              <div class="breath-circle">🌬️</div>
+              <div class="breath-title">Respiração 4-7-8</div>
+              <div class="breath-sub">Para ansiedade aguda • 2 min</div>
+              <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; color:rgba(255,255,255,0.3)">
+                Inspire 4s → Segure 7s → Expire 8s
+              </div>
+            </div>
+
+            <div style="font-size:12px; color:rgba(255,255,255,0.35); font-weight:600; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px">Sessões Guiadas</div>
+
+            <div class="session-grid">
+              <div class="session-card">
+                <div class="session-icon">🌅</div>
+                <div class="session-title">Manhã com foco</div>
+                <div class="session-dur">10 min • Iniciante</div>
+              </div>
+              <div class="session-card">
+                <div class="session-icon">😌</div>
+                <div class="session-title">Reduzir ansiedade</div>
+                <div class="session-dur">7 min • Guiado</div>
+              </div>
+              <div class="session-card">
+                <div class="session-icon">🌙</div>
+                <div class="session-title">Dormir melhor</div>
+                <div class="session-dur">15 min • Noturno</div>
+              </div>
+              <div class="session-card">
+                <div class="session-icon">💆</div>
+                <div class="session-title">Body scan</div>
+                <div class="session-dur">20 min • Avançado</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <button class="nav-item" onclick="navigate('home')"><span class="nav-icon">🏠</span><span class="nav-label">Início</span></button>
+            <button class="nav-item" onclick="navigate('journal')"><span class="nav-icon">📔</span><span class="nav-label">Journal</span></button>
+            <button class="nav-item" onclick="navigate('habits')"><span class="nav-icon">✅</span><span class="nav-label">Hábitos</span></button>
+            <button class="nav-item active" onclick="navigate('meditate')"><span class="nav-icon">🧘</span><span class="nav-label">Meditar</span></button>
+            <button class="nav-item" onclick="navigate('mood')"><span class="nav-icon">😊</span><span class="nav-label">Humor</span></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT INFO PANEL -->
+    <div class="info-panel">
+      <div class="info-card">
+        <h3>📱 Telas disponíveis</h3>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <button onclick="navigate('home')" style="background:rgba(20,184,166,0.12); border:1px solid rgba(20,184,166,0.25); border-radius:10px; padding:10px 14px; color:white; font-size:13px; font-family:inherit; cursor:pointer; text-align:left; transition:all 0.2s" onmouseover="this.style.background='rgba(20,184,166,0.2)'" onmouseout="this.style.background='rgba(20,184,166,0.12)'">🏠 Home Dashboard</button>
+          <button onclick="navigate('mood')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px 14px; color:white; font-size:13px; font-family:inherit; cursor:pointer; text-align:left; transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">😊 Check-in de Humor</button>
+          <button onclick="navigate('journal')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px 14px; color:white; font-size:13px; font-family:inherit; cursor:pointer; text-align:left; transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">📔 Journal com IA</button>
+          <button onclick="navigate('habits')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px 14px; color:white; font-size:13px; font-family:inherit; cursor:pointer; text-align:left; transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">✅ Tracker de Hábitos</button>
+          <button onclick="navigate('meditate')" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px 14px; color:white; font-size:13px; font-family:inherit; cursor:pointer; text-align:left; transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">🧘 Meditação & Respiração</button>
+        </div>
+      </div>
+      <div class="info-card">
+        <h3>💡 Interaja com o protótipo</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:12px; color:rgba(255,255,255,0.5); line-height:1.5; padding:8px 10px; background:rgba(255,255,255,0.04); border-radius:10px;">📱 <strong style="color:rgba(255,255,255,0.8)">Navegue</strong> pelo menu inferior do celular</div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.5); line-height:1.5; padding:8px 10px; background:rgba(255,255,255,0.04); border-radius:10px;">😊 <strong style="color:rgba(255,255,255,0.8)">Selecione emojis</strong> na tela de humor</div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.5); line-height:1.5; padding:8px 10px; background:rgba(255,255,255,0.04); border-radius:10px;">✅ <strong style="color:rgba(255,255,255,0.8)">Marque hábitos</strong> como concluídos</div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.5); line-height:1.5; padding:8px 10px; background:rgba(255,255,255,0.04); border-radius:10px;">🔙 <strong style="color:rgba(255,255,255,0.8)">Use o botão ←</strong> para voltar ao início</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE TAB -->
+  <div id="tab-arch" style="display:none; max-width:780px; width:100%">
+    <div class="info-card">
+      <h3>🏗 Diagrama de Arquitetura</h3>
+      <div class="arch-diagram">
+        <div class="arch-layer">
+          <div class="arch-layer-label">CLIENT</div>
+          <div class="arch-boxes">
+            <div class="arch-box ab-mobile">React Native iOS</div>
+            <div class="arch-box ab-mobile">React Native Android</div>
+          </div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-layer">
+          <div class="arch-layer-label">GATEWAY</div>
+          <div class="arch-boxes">
+            <div class="arch-box ab-api">API Gateway (Fastify)</div>
+            <div class="arch-box ab-api">Supabase Auth</div>
+          </div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-layer">
+          <div class="arch-layer-label">SERVICES</div>
+          <div class="arch-boxes">
+            <div class="arch-box ab-api">Mood Service</div>
+            <div class="arch-box ab-api">Journal Service</div>
+            <div class="arch-box ab-api">Habit Service</div>
+          </div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-layer">
+          <div class="arch-layer-label">AI LAYER</div>
+          <div class="arch-boxes">
+            <div class="arch-box ab-ai">GPT-4o Insights</div>
+            <div class="arch-box ab-ai">Embeddings Search</div>
+          </div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-layer">
+          <div class="arch-layer-label">DATA</div>
+          <div class="arch-boxes">
+            <div class="arch-box ab-data">PostgreSQL</div>
+            <div class="arch-box ab-data">Redis Cache</div>
+            <div class="arch-box ab-data">S3 Storage</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="info-card">
+      <h3>🔐 Segurança & LGPD</h3>
+      <div style="display:flex; flex-wrap:wrap;">
+        <span class="feature-pill">🔒 E2EE Journal</span>
+        <span class="feature-pill">🔑 JWT + Refresh Tokens</span>
+        <span class="feature-pill">📦 AES-256 at rest</span>
+        <span class="feature-pill">🛡 TLS 1.3</span>
+        <span class="feature-pill">🗑 Direito ao esquecimento</span>
+        <span class="feature-pill">🎭 Anonimização pré-IA</span>
+        <span class="feature-pill">✅ Consentimento granular</span>
+        <span class="feature-pill">🔄 MFA opcional</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STACK TAB -->
+  <div id="tab-stack" style="display:none; max-width:780px; width:100%">
+    <div class="info-card">
+      <h3>📱 Frontend Mobile</h3>
+      <div class="stack-item"><div class="stack-dot" style="background:#61DAFB"></div><div class="stack-name">React Native 0.73</div><div class="stack-role">Framework mobile iOS/Android</div></div>
+      <div class="stack-item"><div class="stack-dot" style="background:#3178C6"></div><div class="stack-name">TypeScript 5.x</div><div class="stack-role">Tipagem estática end-to-end</div></div>
+      <div class="stack-item"><div class="stack-dot" style="background:#FF6B6B"></div><div class="stack-name">Zustand + React Query</div><div class="stack-role">Estado global + server cache</div></div>
+      <div class="stack-item"><div class="stack-dot" style="background:#00D084"></div><div class="stack-name">React Navigation 6</div><div class="stack-role">Navegação + deep linking</div></div>
+      <div class="stack-item"><div class="stack-dot" style="background:#F0DB4F"></div><div class="stack-name">Reanimated 3 + Lottie</div><div class="stack-role">Animações & micro-interações</div></div>
+    </div>
+    <div class="info-card">
+      <h3>⚙️ Backend</h3>
+      <div class="stack-item"><div class="stack-dot" style="background:#68A063"></div><div class="stack-name">Node.js 20 + Fastify 4</div><div class="stack-role">Runtime + API framework</div></div>
+      <div class="stack-item"><div class="stack-dot" style="background:#2D3748"></div><div class="stack-name">PostgreSQL 16 (Supabase)</div><div class="stack-role">Banco principal + real-time</div></div>
+      <div class="stack-item"><div class="stack-dot" style="background:#DC382D"></div><div class="stack-name">Redis 7</div><div class="stack-role">Cache + sessions + pub/sub</div></div>
+      <div class="stack-item"><div class="stack-dot" style="background:#5A67D8"></div><div class="stack-name">Prisma 5</div><div class="stack-role">ORM type-safe + migrations</div></div>
+    </div>
+    <div class="info-card">
+      <h3>🤖 IA & Observabilidade</h3>
+      <div class="stack-item"><div class="stack-dot" style="background:#10A37F"></div><div class="stack-name">OpenAI GPT-4o</div><div class="stack-role">Insights do journal, sugestões</div></div>
+      <div class="stack-item"><div class="stack-dot" style="background:#7B61FF"></div><div class="stack-name">text-embedding-3-small</div><div class="stack-role">Busca semântica no histórico</div></div>
+      <div class="stack-item"><div class="stack-dot" style="background:#F0A500"></div><div class="stack-name">PostHog</div><div class="stack-role">Analytics, A/B, feature flags</div></div>
+      <div class="stack-item"><div class="stack-dot" style="background:#FB4226"></div><div class="stack-name">Sentry</div><div class="stack-role">Crash reporting + performance</div></div>
+    </div>
+  </div>
+
+  <!-- MODULES TAB -->
+  <div id="tab-modules" style="display:none; max-width:780px; width:100%">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="info-card" style="margin:0">
+        <div style="font-size:28px; margin-bottom:8px">🧠</div>
+        <div style="font-size:14px; font-weight:700; color:white; margin-bottom:4px">Humor Tracker</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.5">Check-in diário, escala de emoções Plutchik, gráficos históricos, alertas de padrões negativos</div>
+        <div style="margin-top:8px"><span class="feature-pill" style="font-size:10px; padding:3px 8px">Core</span></div>
+      </div>
+      <div class="info-card" style="margin:0">
+        <div style="font-size:28px; margin-bottom:8px">📔</div>
+        <div style="font-size:14px; font-weight:700; color:white; margin-bottom:4px">Journal IA</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.5">Prompts adaptativos, análise de sentimento, extração de temas recorrentes, busca semântica</div>
+        <div style="margin-top:8px"><span class="feature-pill" style="font-size:10px; padding:3px 8px">Core</span></div>
+      </div>
+      <div class="info-card" style="margin:0">
+        <div style="font-size:28px; margin-bottom:8px">🌿</div>
+        <div style="font-size:14px; font-weight:700; color:white; margin-bottom:4px">Hábitos & Metas</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.5">Streaks, heatmap anual, habit stacking, biblioteca curada, revisão semanal automática</div>
+        <div style="margin-top:8px"><span class="feature-pill" style="font-size:10px; padding:3px 8px">Core</span></div>
+      </div>
+      <div class="info-card" style="margin:0">
+        <div style="font-size:28px; margin-bottom:8px">🧘</div>
+        <div style="font-size:14px; font-weight:700; color:white; margin-bottom:4px">Meditação</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.5">Sessões guiadas, 4 técnicas de respiração, modo SOS para crises, sons ambientes</div>
+        <div style="margin-top:8px"><span class="feature-pill" style="font-size:10px; padding:3px 8px">Conteúdo</span></div>
+      </div>
+      <div class="info-card" style="margin:0">
+        <div style="font-size:28px; margin-bottom:8px">📊</div>
+        <div style="font-size:14px; font-weight:700; color:white; margin-bottom:4px">Dashboard</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.5">Correlações humor x hábitos, insights semanais, relatório mensal em PDF</div>
+        <div style="margin-top:8px"><span class="feature-pill" style="font-size:10px; padding:3px 8px">Analytics</span></div>
+      </div>
+      <div class="info-card" style="margin:0">
+        <div style="font-size:28px; margin-bottom:8px">🏆</div>
+        <div style="font-size:14px; font-weight:700; color:white; margin-bottom:4px">Gamificação</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.5">XP, badges, streaks, desafios semanais, ranking anônimo, recompensas progressivas</div>
+        <div style="margin-top:8px"><span class="feature-pill" style="font-size:10px; padding:3px 8px">Engajamento</span></div>
+      </div>
+    </div>
+    <div class="info-card" style="margin-top:12px">
+      <h3>🗺 Roadmap MVP → V2.0</h3>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; gap:12px; align-items:center">
+          <div style="width:80px; font-size:11px; color:var(--teal-400); font-weight:700; flex-shrink:0">Mês 1-3</div>
+          <div style="flex:1; background:rgba(20,184,166,0.15); border-radius:8px; padding:8px 12px; font-size:12px; color:rgba(255,255,255,0.7)">MVP: Humor Tracker + Journal básico + Auth + Onboarding</div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center">
+          <div style="width:80px; font-size:11px; color:#A78BFA; font-weight:700; flex-shrink:0">Mês 4-6</div>
+          <div style="flex:1; background:rgba(139,92,246,0.12); border-radius:8px; padding:8px 12px; font-size:12px; color:rgba(255,255,255,0.7)">Beta: Hábitos + Meditação + Notificações + Dashboard</div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center">
+          <div style="width:80px; font-size:11px; color:#FCD34D; font-weight:700; flex-shrink:0">Mês 7-9</div>
+          <div style="flex:1; background:rgba(245,158,11,0.1); border-radius:8px; padding:8px 12px; font-size:12px; color:rgba(255,255,255,0.7)">V1.0: Journal IA + Gamificação + Busca semântica → Launch 🚀</div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center">
+          <div style="width:80px; font-size:11px; color:#FDA4AF; font-weight:700; flex-shrink:0">Mês 10+</div>
+          <div style="flex:1; background:rgba(244,63,94,0.08); border-radius:8px; padding:8px 12px; font-size:12px; color:rgba(255,255,255,0.7)">V1.5+: Modo SOS, integrações Apple/Google Health, plano Corporativo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let current = 'home';
+
+  function navigate(screen) {
+    if (screen === current) return;
+    const prev = document.getElementById('screen-' + current);
+    const next = document.getElementById('screen-' + screen);
+    prev.classList.remove('active');
+    prev.classList.add('exit');
+    setTimeout(() => { prev.classList.remove('exit'); }, 350);
+    next.classList.add('active');
+    current = screen;
+  }
+
+  function selectMood(el) {
+    document.querySelectorAll('.emoji-option').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function toggleHabit(el) {
+    el.classList.toggle('done');
+    const check = el.querySelector('.habit-check');
+    check.textContent = el.classList.contains('done') ? '✓' : '';
+    updateHabitSummary();
+  }
+
+  function updateHabitSummary() {
+    const total = document.querySelectorAll('.habit-item').length;
+    const done = document.querySelectorAll('.habit-item.done').length;
+    const score = document.querySelector('.hs-score');
+    if (score) score.textContent = done + ' / ' + total;
+    const offset = Math.round((1 - done/total) * 138);
+    const fill = document.querySelector('.progress-ring .fill');
+    if (fill) fill.style.strokeDashoffset = offset;
+  }
+
+  function showTab(tab) {
+    ['prototype','arch','stack','modules'].forEach(t => {
+      const el = document.getElementById('tab-' + t);
+      if (el) el.style.display = 'none';
+    });
+    document.querySelectorAll('.nav-tab').forEach((el, i) => {
+      el.classList.remove('active');
+    });
+    const tabs = ['prototype','arch','stack','modules'];
+    const idx = tabs.indexOf(tab);
+    document.querySelectorAll('.nav-tab')[idx].classList.add('active');
+    const target = document.getElementById('tab-' + tab);
+    if (target) target.style.display = tab === 'prototype' ? 'flex' : 'block';
+  }
+</script>
+</body>
+</html>
